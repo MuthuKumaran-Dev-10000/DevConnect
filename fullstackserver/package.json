@@ -1,0 +1,14 @@
+{
+  "name": "fullstackserver",
+  "version": "1.0.0",
+  "main": "Server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node Server.js",
+    "dev" : "nodemon Server.js"
+  },
+  "keywords": [],
+  "author": "Muthukumaran S",
+  "license": "ISC",
+  "description": ""
+}
