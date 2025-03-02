@@ -1,4 +1,3 @@
-require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -7,31 +6,80 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.log(err));
+mongoose.connect("mongodb://localhost:27017/mernDB/students")
+  .then(() => console.log("✅ Connected to MongoDB"))
+  .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
-const userSchema = new mongoose.Schema({ name: String, email: String });
-const User = mongoose.model("User", userSchema);
+const studentSchema = new mongoose.Schema({
+  name: String,
+  regno: String,
+  department: String,
+});
 
-app.post("/add-user", async (req, res) => {
+const Student = mongoose.model("Student", studentSchema);
+
+app.get("/students", async (req, res) => {
   try {
-    const newUser = new User(req.body);
-    await newUser.save();
-    res.status(201).send("User added successfully");
+    const students = await Student.find();
+    console.log("📜 All Students Fetched:", students);
+    res.json(students);
   } catch (error) {
-    res.status(500).send(error);
+    console.error("❌ Error Fetching Students:", error);
+    res.status(500).json({ error: "Error Fetching Students" });
   }
 });
 
-app.get("/users", async (req, res) => {
+app.post("/students", async (req, res) => {
   try {
-    const users = await User.find();
-    res.json(users);
+    const newStudent = new Student(req.body);
+    await newStudent.save();
+    console.log("✅ Student Added:", newStudent);
+    res.json({ message: "Student Added", student: newStudent });
   } catch (error) {
-    res.status(500).send(error);
+    console.error("❌ Error Adding Student:", error);
+    res.status(500).json({ error: "Error Adding Student" });
   }
 });
 
-app.listen(5000, () => console.log("Server running on port 5000"));
+app.put("/students/:id", async (req, res) => {
+  try {
+    const student = await Student.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!student) {
+      console.error("⚠ Student Not Found for Update:", req.params.id);
+      return res.status(404).json({ error: "Student Not Found" });
+    }
+    console.log("🔄 Student Updated:", student);
+    res.json({ message: "Student Updated", student });
+  } catch (error) {
+    console.error("❌ Error Updating Student:", error);
+    res.status(500).json({ error: "Error Updating Student" });
+  }
+});
+
+app.delete("/students/:id", async (req, res) => {
+  try {
+    const student = await Student.findByIdAndDelete(req.params.id);
+    if (!student) {
+      console.error("⚠ Student Not Found for Deletion:", req.params.id);
+      return res.status(404).json({ error: "Student Not Found" });
+    }
+    console.log("🗑 Student Deleted:", student);
+    res.json({ message: "Student Deleted" });
+  } catch (error) {
+    console.error("❌ Error Deleting Student:", error);
+    res.status(500).json({ error: "Error Deleting Student" });
+  }
+});
+
+const logStudents = async () => {
+  try {
+    const students = await Student.find();
+    console.log("📜 Current Student List:", students);
+  } catch (error) {
+    console.error("❌ Error Fetching Students for Logging:", error);
+  }
+};
+
+setInterval(logStudents, 10000);
+
+app.listen(5000, () => console.log("🚀 Server running on port 5000"));
